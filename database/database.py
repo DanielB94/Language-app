@@ -11,46 +11,6 @@ def get_connection() -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
-def hash_password(password: str) -> str:
-    """Generates a random salt and calculates the secure hash for the password using PBKDF2-HMAC.
-
-    Args:
-        password: The plain-text password.
-
-    Returns:
-        A combined string formatted as 'salt$hash'.
-    """
-    salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac(
-        'sha256', 
-        password.encode('utf-8'), 
-        salt.encode('utf-8'), 
-        100000
-    )
-    return f"{salt}${dk.hex()}"
-
-def verify_password(stored_password: str, provided_password: str) -> bool:
-    """Verifies if a provided password matches the stored one.
-
-    Args:
-        stored_password: The 'salt$hash' string saved in the database.
-        provided_password: The password entered by the user to validate.
-
-    Returns:
-        True if it matches, False otherwise or if a format error occurs.
-    """
-    try:
-        salt, stored_hash = stored_password.split('$')
-        dk = hashlib.pbkdf2_hmac(
-            'sha256', 
-            provided_password.encode('utf-8'), 
-            salt.encode('utf-8'), 
-            100000
-        )
-        return dk.hex() == stored_hash
-    except ValueError:
-        return False
-
 def create_tables() -> None:
     """Creates the main system tables (users, progress, mistakes) if they do not exist."""
     conn = None
