@@ -63,6 +63,11 @@ def create_tables() -> None:
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
                 username TEXT,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT,
+                google_id TEXT UNIQUE,
+                avatar_url TEXT,
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -103,7 +108,7 @@ def create_tables() -> None:
             conn.close()
 
 # USER CRUD
-def insert_user(user_data: Tuple[str, str, str]) -> bool:
+def insert_user(user_data: Tuple[str, str, str, str, Optional[str], Optional[str]]) -> bool:
     """Inserts a new user into the database with a hashed password.
 
     Args:
@@ -117,14 +122,14 @@ def insert_user(user_data: Tuple[str, str, str]) -> bool:
         conn = get_connection()
         cursor = conn.cursor()
         
-        user_id, phone_number, raw_password = user_data
-        secure_password_hash = hash_password(raw_password)
+        user_id, username, email, raw_password, google_id, avatar_url = user_data
+        secure_password_hash = hash_password(raw_password) if raw_password else None
         
         query = '''
-            INSERT INTO users (id, phone_number, password_hash)
-            VALUES (?, ?, ?)
+            INSERT INTO users (id, username, email, password_hash, google_id, avatar_url)
+            VALUES (?, ?, ?, ?, ?, ?)
         '''
-        cursor.execute(query, (user_id, phone_number, secure_password_hash))
+        cursor.execute(query, (user_id, username, email, secure_password_hash, google_id, avatar_url))
         conn.commit()
         return True
     except sqlite3.Error as e:
